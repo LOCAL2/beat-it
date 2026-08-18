@@ -14,24 +14,28 @@ export default defineConfig({
         target: 'https://generativelanguage.googleapis.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-check/, '/v1beta/models/gemini-3.5-flash-lite:generateContent'),
-        onProxyReq: (proxyReq) => {
-          proxyReq.removeHeader('sec-fetch-site');
-          proxyReq.removeHeader('sec-fetch-mode');
-          proxyReq.removeHeader('sec-fetch-dest');
-          proxyReq.removeHeader('referer');
-          proxyReq.removeHeader('origin');
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, _req, _res) => {
+            proxyReq.removeHeader('sec-fetch-site');
+            proxyReq.removeHeader('sec-fetch-mode');
+            proxyReq.removeHeader('sec-fetch-dest');
+            proxyReq.removeHeader('referer');
+            proxyReq.removeHeader('origin');
+          });
         }
       },
       '/api-unsplash': {
         target: 'https://unsplash.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-unsplash/, '/napi'),
-        onProxyReq: (proxyReq) => {
-          proxyReq.removeHeader('sec-fetch-site');
-          proxyReq.removeHeader('sec-fetch-mode');
-          proxyReq.removeHeader('sec-fetch-dest');
-          proxyReq.removeHeader('referer');
-          proxyReq.removeHeader('origin');
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, _req, _res) => {
+            proxyReq.removeHeader('sec-fetch-site');
+            proxyReq.removeHeader('sec-fetch-mode');
+            proxyReq.removeHeader('sec-fetch-dest');
+            proxyReq.removeHeader('referer');
+            proxyReq.removeHeader('origin');
+          });
         }
       }
     }
