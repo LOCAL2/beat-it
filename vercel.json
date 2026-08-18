@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api-check",
+      "destination": "/api/check"
+    },
+    {
+      "source": "/api-unsplash/(.*)",
+      "destination": "/api/unsplash/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

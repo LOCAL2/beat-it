@@ -10,10 +10,10 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api/check': {
+      '/api-check': {
         target: 'https://generativelanguage.googleapis.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/check/, '/v1beta/models/gemini-3.5-flash-lite:generateContent'),
+        rewrite: (path) => path.replace(/^\/api-check/, '/v1beta/models/gemini-3.5-flash-lite:generateContent'),
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, _req, _res) => {
             proxyReq.removeHeader('sec-fetch-site');
@@ -24,10 +24,10 @@ export default defineConfig({
           });
         }
       },
-      '/api/unsplash': {
+      '/api-unsplash': {
         target: 'https://unsplash.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/unsplash/, '/napi'),
+        rewrite: (path) => path.replace(/^\/api-unsplash/, '/napi'),
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, _req, _res) => {
             proxyReq.removeHeader('sec-fetch-site');

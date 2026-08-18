@@ -131,7 +131,7 @@ function App() {
       try {
         const query = encodeURIComponent(currentItem.nameEn);
         const res = await fetch(
-          `/api/unsplash/search/photos?query=${query}&per_page=1`
+          `/api-unsplash/search/photos?query=${query}&per_page=1`
         );
         if (!res.ok) throw new Error('Network error');
         
@@ -405,7 +405,7 @@ Return your judgment as a JSON object:
 
     try {
       const response = await fetch(
-        `/api/check?key=${apiKey}`,
+        `/api-check?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
