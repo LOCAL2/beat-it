@@ -5,6 +5,7 @@ import { supabase, generateUUID } from './supabase';
 interface CurrentItem {
   nameEn: string;
   nameTh: string;
+  emoji?: string;
 }
 
 interface GeminiResult {
@@ -12,6 +13,7 @@ interface GeminiResult {
   reason: string;
   nextNameEn: string;
   nextNameTh: string;
+  emoji: string;
 }
 
 interface HistoryRound {
@@ -96,6 +98,7 @@ function App() {
   const [currentItem, setCurrentItem] = useState<CurrentItem>({
     nameEn: 'Rock',
     nameTh: 'หิน',
+    emoji: '🪨',
   });
   const [imageUrl, setImageUrl] = useState<string>('');
   const [imageLoading, setImageLoading] = useState<boolean>(false);
@@ -429,7 +432,8 @@ Return your judgment as a JSON object:
   "win": boolean,
   "reason": "A long, highly informative, yet very sarcastic and slightly trollish explanation of why the user's item wins (matching the mode rules) or loses. If the user answered in Thai, write the reason in Thai. If in English, write in English. Do NOT include any emojis in the explanation text.",
   "nextNameEn": "Name of the user's item in English (only if win is true, otherwise empty string). Capitalize it. Do not include emojis.",
-  "nextNameTh": "Name of the user's item in Thai (only if win is true, otherwise empty string). Do not include emojis."
+  "nextNameTh": "Name of the user's item in Thai (only if win is true, otherwise empty string). Do not include emojis.",
+  "emoji": "A single appropriate emoji representing the user's item (only if win is true, otherwise empty string)"
 }
 `;
 
@@ -505,6 +509,7 @@ Return your judgment as a JSON object:
         setPendingNextItem({
           nameEn: result.nextNameEn || answer,
           nameTh: result.nextNameTh || answer,
+          emoji: result.emoji || '❓'
         });
       } else {
         setIsError(true);
@@ -543,6 +548,7 @@ Return your judgment as a JSON object:
     setCurrentItem({
       nameEn: 'Rock',
       nameTh: 'หิน',
+      emoji: '🪨',
     });
   };
 
@@ -753,8 +759,8 @@ Return your judgment as a JSON object:
                             />
                           ) : (
                             !imageLoading && (
-                              <div className="image-fallback">
-                                {currentItem.nameEn.charAt(0)}
+                              <div className="image-fallback" style={{ fontSize: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+                                {currentItem.emoji || '❓'}
                               </div>
                             )
                           )}
