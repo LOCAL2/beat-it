@@ -671,9 +671,7 @@ Return your judgment as a JSON object:
                 <span className="badge-label">Streak</span>
                 <span className="badge-value">{currentActiveScore}</span>
               </div>
-              <button className="logout-key-btn" onClick={handleClearKey} title="Change API Key">
-                🔑
-              </button>
+
             </div>
           </header>
 
