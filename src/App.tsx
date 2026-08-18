@@ -104,6 +104,9 @@ function App() {
   // Current game run scores
   const [scoreBeat, setScoreBeat] = useState(0);
   const [scoreLose, setScoreLose] = useState(0);
+  const [points, setPoints] = useState<number>(() => {
+    return Number(localStorage.getItem('beat_it_points') || '0');
+  });
   
   const [isLoading, setIsLoading] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
@@ -203,7 +206,7 @@ function App() {
   }, [showKeyInput, hasSetupProfile, leaderboardMode]);
 
   // Sync high scores to Supabase
-  const syncStreaksToSupabase = async (beatHigh: number, loseHigh: number) => {
+  const syncStreaksToSupabase = async (beatHigh: number, loseHigh: number, currentPoints: number) => {
     if (!userId || !username) return;
     try {
       await supabase.from('leaderboard').upsert({
@@ -212,6 +215,7 @@ function App() {
         avatar_url: avatarUrl,
         streak_beat: beatHigh,
         streak_lose: loseHigh,
+        points: currentPoints,
         updated_at: new Date().toISOString()
       });
     } catch (err) {
@@ -265,6 +269,7 @@ function App() {
         avatar_url: setupAvatar,
         streak_beat: highScoreBeat,
         streak_lose: highScoreLose,
+        points: points,
         updated_at: new Date().toISOString()
       });
     } catch (err) {
@@ -293,6 +298,7 @@ function App() {
         avatar_url: setupAvatar,
         streak_beat: highScoreBeat,
         streak_lose: highScoreLose,
+        points: points,
         updated_at: new Date().toISOString()
       });
     } catch (err) {
@@ -367,6 +373,26 @@ function App() {
       return;
     }
 
+    // Skip logic
+    if (answer.toLowerCase() === 'skip' || answer === 'ข้าม') {
+      const newPoints = Math.max(0, points - 1);
+      setPoints(newPoints);
+      localStorage.setItem('beat_it_points', String(newPoints));
+      syncStreaksToSupabase(highScoreBeat, highScoreLose, newPoints);
+      
+      logRoundToHistory({
+        challengeEn: currentItem.nameEn,
+        challengeTh: currentItem.nameTh,
+        response: answer,
+        win: false,
+        reason: 'ผู้เล่นทำการข้าม (โดนหัก 1 แต้ม)',
+        mode: gameMode
+      });
+      
+      handleNextItem();
+      return;
+    }
+
     setIsLoading(true);
     setExplanation(null);
 
@@ -379,9 +405,12 @@ The user responds with: "${answer}".
 IMPORTANT: This is NOT a game of Rock-Paper-Scissors. Do NOT use classic Rock-Paper-Scissors rules.
 Instead, decide if the user's item ${isBeatMode ? 'beats' : 'loses to'} the current challenge item based on real-world physics, logic, chemistry, or creative/metaphorical matchups.
 
+For example, Fire can burn and destroy most objects, making Fire the winner against Rock, not Rock winning against Fire.
+
 ${isBeatMode ? `
 For "What beats this?" mode:
 - User wins if their item beats the challenge item.
+- Example: Challenge is "Rock", User answers "Fire" -> Win (true) because Fire melts/burns Rock.
 - Example: Challenge is "Rock", User answers "Hammer" -> Win (true) because Hammer smashes Rock.
 - Example: Challenge is "Fire", User answers "Water" -> Win (true) because Water extinguishes Fire.
 - Example: Challenge is "Rock", User answers "Paper" -> Lose (false) (in real life Paper doesn't physically beat Rock).
@@ -389,6 +418,7 @@ For "What beats this?" mode:
 For "What loses to this?" mode:
 - User wins if their item loses to the challenge item (i.e. the challenge item beats the user's item).
 - Example: Challenge is "Rock", User answers "Scissors" -> Win (true) because Scissors loses to Rock (Rock smashes Scissors).
+- Example: Challenge is "Fire", User answers "Rock" -> Win (true) because Rock is melted/beaten by Fire.
 - Example: Challenge is "Fire", User answers "Wood" -> Win (true) because Wood is consumed/beaten by Fire.
 - Example: Challenge is "Water", User answers "Fire" -> Win (true) because Fire is extinguished/beaten by Water.
 - Example: Challenge is "Rock", User answers "Hammer" -> Lose (false) because Hammer beats Rock (doesn't lose to it).
@@ -397,7 +427,7 @@ For "What loses to this?" mode:
 Return your judgment as a JSON object:
 {
   "win": boolean,
-  "reason": "A short, fun, 1-2 sentence explanation of why the user's item wins (matching the mode rules) or loses. If the user answered in Thai, write the reason in Thai. If in English, write in English. Do NOT include any emojis in the explanation text.",
+  "reason": "A long, highly informative, yet very sarcastic and slightly trollish explanation of why the user's item wins (matching the mode rules) or loses. If the user answered in Thai, write the reason in Thai. If in English, write in English. Do NOT include any emojis in the explanation text.",
   "nextNameEn": "Name of the user's item in English (only if win is true, otherwise empty string). Capitalize it. Do not include emojis.",
   "nextNameTh": "Name of the user's item in Thai (only if win is true, otherwise empty string). Do not include emojis."
 }
@@ -446,6 +476,9 @@ Return your judgment as a JSON object:
 
       if (result.win) {
         setIsSuccess(true);
+        const newPoints = points + 1;
+        setPoints(newPoints);
+        localStorage.setItem('beat_it_points', String(newPoints));
         
         if (isBeatMode) {
           const newScore = scoreBeat + 1;
@@ -453,7 +486,9 @@ Return your judgment as a JSON object:
           if (newScore > highScoreBeat) {
             setHighScoreBeat(newScore);
             localStorage.setItem('beat_it_highscore_beat', String(newScore));
-            syncStreaksToSupabase(newScore, highScoreLose);
+            syncStreaksToSupabase(newScore, highScoreLose, newPoints);
+          } else {
+            syncStreaksToSupabase(highScoreBeat, highScoreLose, newPoints);
           }
         } else {
           const newScore = scoreLose + 1;
@@ -461,7 +496,9 @@ Return your judgment as a JSON object:
           if (newScore > highScoreLose) {
             setHighScoreLose(newScore);
             localStorage.setItem('beat_it_highscore_lose', String(newScore));
-            syncStreaksToSupabase(highScoreBeat, newScore);
+            syncStreaksToSupabase(highScoreBeat, newScore, newPoints);
+          } else {
+            syncStreaksToSupabase(highScoreBeat, highScoreLose, newPoints);
           }
         }
 
@@ -862,6 +899,9 @@ Return your judgment as a JSON object:
                                     {isMe && <span className="you-badge">You</span>}
                                   </span>
                                 </div>
+                                <div className="player-points" style={{ marginRight: '1rem', textAlign: 'right' }}>
+                                  <span style={{ color: '#0ea5e9', fontWeight: 'bold' }}>{player.points || 0} ⭐️</span>
+                                </div>
                                 <div className="player-streak">
                                   <span className="streak-value">{displayStreak !== undefined ? displayStreak : 0}</span>
                                   <span className="streak-fire">🔥</span>
@@ -928,6 +968,10 @@ Return your judgment as a JSON object:
               <div className="sidebar-card">
                 <h3>สถิติสูงสุด (Highscores)</h3>
                 <div className="highscore-stats-grid">
+                  <div className="highscore-stat-box" style={{ gridColumn: 'span 2' }}>
+                    <span className="stat-label">แต้มสะสมรวม (Total Points)</span>
+                    <span className="stat-value" style={{ color: '#0ea5e9' }}>{points} ⭐️</span>
+                  </div>
                   <div className="highscore-stat-box">
                     <span className="stat-label">ชนะมัน (Beat It)</span>
                     <span className="stat-value">{highScoreBeat} 🔥</span>
