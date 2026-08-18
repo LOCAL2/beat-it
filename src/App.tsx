@@ -315,12 +315,7 @@ function App() {
     }
   };
 
-  const handleClearKey = () => {
-    localStorage.removeItem('gemini_api_key');
-    setApiKey('');
-    setTempKey('');
-    setShowKeyInput(true);
-  };
+
 
   // Log round to local storage history
   const logRoundToHistory = (round: HistoryRound) => {
